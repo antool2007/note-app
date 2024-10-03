@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>노트 작성</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        // 노트를 자동 저장하는 함수
+        function autoSave() {
+            const notes = document.getElementById("notes").value.split("\n");
+
+            fetch("/save_notes", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ notes: notes })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log("노트가 자동 저장되었습니다.");
+                }
+            })
+            .catch(error => console.error("자동 저장 실패:", error));
+        }
+
+        // 백업 버튼 클릭 시 백업 요청 및 애니메이션 처리
+        function backupNotes() {
+            const notes = document.getElementById("notes").value.split("\n");
+            
+            // 버튼 클릭 시 애니메이션 적용
+            const saveButton = document.querySelector('.save-btn');
+            saveButton.style.transform = 'scale(0.1)'; // 10%까지 작아짐
+            setTimeout(() => {
+                saveButton.style.transform = 'scale(1)'; // 원래 크기로 복귀
+            }, 300); // 300ms 후 원래 크기로 복귀
+
+            fetch("/backup_notes", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ notes: notes })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "backup success") {
+                    console.log("백업 완료: " + data.filename);
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <textarea id="notes" oninput="autoSave()" rows="20">{{ "\n".join(notes) }}</textarea>
+        <button class="save-btn" onclick="backupNotes()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000">
+                <circle cx="12" cy="12" r="10" stroke="none"/>
+                <path d="M12 6v8M9 9l3 3 3-3"/>
+            </svg>
+        </button>
+    </div>
+</body>
+</html>
